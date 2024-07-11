@@ -8,7 +8,7 @@ namespace Apartment_Marketplace_API.Models.Domain
         public Guid Id { get; set; }
         public uint Rooms { get; set; }
         public string Name { get; set; }
-        public uint Price { get; set; }
+        public decimal Price { get; set; }
         public string Description { get; set; }
     }
 }

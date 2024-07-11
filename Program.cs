@@ -1,16 +1,21 @@
 using Apartment_Marketplace_API.Data;
+using Apartment_Marketplace_API.Middleware;
 using Apartment_Marketplace_API.Models.Domain;
 using Apartment_Marketplace_API.Models.DTO;
 using Apartment_Marketplace_API.Repositories.Implementation;
 using Apartment_Marketplace_API.Repositories.Interface;
 using Microsoft.AspNetCore.Authentication.Negotiate;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Apartment_Marketplace_API
 {
     public class Program
     {
+        
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -39,8 +44,23 @@ namespace Apartment_Marketplace_API
             });
 
             builder.Services.AddScoped<IApartmentRepository, ApartmentRepository>();
-
+            builder.Services.AddExceptionHandler<ApartmentExceptionHandler>();
             var app = builder.Build();
+            //app.UseStatusCodePagesWithReExecute("/Errors/{0}");
+            //app.UseExceptionHandler();
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    var exceptionHandler = context.RequestServices.GetRequiredService<ApartmentExceptionHandler>();
+                    var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+
+                    if (exceptionFeature?.Error != null)
+                    {
+                        await exceptionHandler.TryHandleAsync(context, exceptionFeature.Error, context.RequestAborted);
+                    }
+                });
+            });
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -67,7 +87,14 @@ namespace Apartment_Marketplace_API
                     Price = request.Price,
                     Description = request.Description
                 };
-                await _apartmentRepository.CreateAsync(apartment);
+                try
+                {
+                    await _apartmentRepository.CreateAsync(apartment);
+                }
+                catch (BadHttpRequestException ex)
+                {
+                    return Results.BadRequest("Failed to create apartment.\n" + ex.Message);
+                }
                 //Domain model to DTO 
                 var response = new ApartmentDto
                 {
@@ -84,22 +111,46 @@ namespace Apartment_Marketplace_API
 
 
             //GET : https://localhost:7081/api/apartments
-            app.MapGet("/apartments", async () =>
+            app.MapGet("/apartments", async (int? rooms, string price) =>
             {
-                var appartments = await _apartmentRepository.GetAllAsync();
-                //Map Domain model to the DTO 
-                var response = new List<ApartmentDto>();
-                foreach (var appartment in appartments)
+                var apartments = await _apartmentRepository.GetAllAsync();
+
+                if (rooms.HasValue)
                 {
-                    response.Add(new ApartmentDto
-                    {
-                        Id = appartment.Id,
-                        Name = appartment.Name,
-                        Rooms = appartment.Rooms,
-                        Price = appartment.Price,
-                        Description = appartment.Description,
-                    });
+                    apartments = apartments.Where(a => a.Rooms == rooms.Value).ToList();
                 }
+
+                if (price?.ToLower() == "asc")
+                {
+                    apartments = apartments.OrderBy(a => a.Price).ToList();
+                }
+                else if( price?.ToLower() == "desc")
+                {
+                    apartments = apartments.OrderByDescending(a => a.Price).ToList();
+                }
+
+                var response = apartments.Select(a => new ApartmentDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Rooms = a.Rooms,
+                    Price = a.Price,
+                    Description = a.Description
+                }).ToList();
+
+                //Map Domain model to the DTO 
+                //var response = new List<ApartmentDto>();
+                //foreach (var appartment in apartments)
+                //{
+                //    response.Add(new ApartmentDto
+                //    {
+                //        Id = apartments.Id,
+                //        Name = apartments.Name,
+                //        Rooms = apartments.Rooms,
+                //        Price = apartments.Price,
+                //        Description = apartments.Description,
+                //    });
+                //}
                 return Results.Ok(response);
             })
             .WithName("GetAllApartments")
@@ -146,7 +197,16 @@ namespace Apartment_Marketplace_API
                     Description = request.Description
                 };
 
-                apartment = await _apartmentRepository.UpdateAsync(apartment);
+                try
+                {
+                    apartment = await _apartmentRepository.UpdateAsync(apartment);
+                }
+                catch (BadHttpRequestException ex)
+                {
+                    return Results.BadRequest("Failed to create apartment.\n" + ex.Message);
+                }
+                
+                
 
                 if (apartment == null)
                 {

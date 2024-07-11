@@ -134,3 +134,4 @@ D:\WORK\Internships\Techstack\Apartment_Marketplace_API\bin\Debug\net8.0\runtime
 D:\WORK\Internships\Techstack\Apartment_Marketplace_API\bin\Debug\net8.0\runtimes\win-arm64\native\e_sqlite3.dll
 D:\WORK\Internships\Techstack\Apartment_Marketplace_API\bin\Debug\net8.0\runtimes\win-x64\native\e_sqlite3.dll
 D:\WORK\Internships\Techstack\Apartment_Marketplace_API\bin\Debug\net8.0\runtimes\win-x86\native\e_sqlite3.dll
+D:\WORK\Internships\Techstack\Apartment_Marketplace_API\obj\Debug\net8.0\Apartment_Marketplace_API.sourcelink.json
