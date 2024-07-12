@@ -22,7 +22,7 @@ namespace Apartment_Marketplace_API.Repositories.Implementation
             {
                 return (false, $"Length of the apartments description cannot be longer than {maxDescriptionLength} or null");
             }
-            if (apartment.Price > maxPrice || apartment.Price < 0)
+            if (apartment.Price > maxPrice || apartment.Price <= 0)
             {
                 return (false, $"Price must be from 0 to {maxPrice}");
             }
@@ -43,7 +43,7 @@ namespace Apartment_Marketplace_API.Repositories.Implementation
             (bool, string) isValid = ValidateApartments(apartment);
             if(isValid.Item1 == false)
             {
-                throw new BadHttpRequestException(isValid.Item2);
+                throw new ArgumentException(isValid.Item2);
             }
             await _dbContext.Apartments.AddAsync(apartment);
             await _dbContext.SaveChangesAsync();
@@ -65,7 +65,7 @@ namespace Apartment_Marketplace_API.Repositories.Implementation
             (bool, string) isValid = ValidateApartments(apartment);
             if (isValid.Item1 == false)
             {
-                throw new BadHttpRequestException(isValid.Item2);
+                throw new ArgumentException(isValid.Item2);
             }
             var existingApartment = await _dbContext.Apartments.FirstOrDefaultAsync(x => x.Id == apartment.Id);
             if (existingApartment != null)

@@ -93,7 +93,11 @@ namespace Apartment_Marketplace_API
                 }
                 catch (BadHttpRequestException ex)
                 {
-                    return Results.BadRequest("Failed to create apartment.\n" + ex.Message);
+                    return Results.BadRequest(ex.Message);
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(ex.Message);
                 }
                 //Domain model to DTO 
                 var response = new ApartmentDto
@@ -203,9 +207,12 @@ namespace Apartment_Marketplace_API
                 }
                 catch (BadHttpRequestException ex)
                 {
-                    return Results.BadRequest("Failed to create apartment.\n" + ex.Message);
+                    return Results.BadRequest(ex.Message);
                 }
-                
+                catch(ArgumentException ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
                 
 
                 if (apartment == null)
