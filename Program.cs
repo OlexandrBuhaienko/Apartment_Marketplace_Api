@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 namespace Apartment_Marketplace_API
 {
@@ -96,6 +97,11 @@ namespace Apartment_Marketplace_API
                     return Results.BadRequest(ex.Message);
                 }
                 catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+                
+                catch (JsonException ex)
                 {
                     return Results.BadRequest(ex.Message);
                 }
@@ -192,7 +198,7 @@ namespace Apartment_Marketplace_API
             app.MapPut("/apartments/{id}", async ([FromRoute] Guid id, UpdateApartmentRequestDto request) =>
             {
                 //Convert DTO to Domain model
-                Apartment apartment = new Apartment
+                var apartment = new Apartment
                 {
                     Id = id,
                     Name = request.Name,
@@ -200,7 +206,6 @@ namespace Apartment_Marketplace_API
                     Price = request.Price,
                     Description = request.Description
                 };
-
                 try
                 {
                     apartment = await _apartmentRepository.UpdateAsync(apartment);
@@ -213,7 +218,10 @@ namespace Apartment_Marketplace_API
                 {
                     return Results.BadRequest(ex.Message);
                 }
-                
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
 
                 if (apartment == null)
                 {
